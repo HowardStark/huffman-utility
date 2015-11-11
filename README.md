@@ -6,6 +6,7 @@ Huffman Tables are pretty cool. It's a lossless compression technique where you 
 So we want to compress these 24 bytes down to something much smaller. Let's break it down and build a little table showing how often each letter appears:
 
 Table 1.
+
 | NODE | WEIGHT |
 | ------- | -------- |
 | B        | 2            |
@@ -26,6 +27,7 @@ Table 1.
  Now we have the characters and we have the weight (the frequency that they appear in the phrase). So good, so far. Now we need to take the lowest two and combine them. Let's do this for D and G and then again for H and M and one last time for T and E. I started doing this in the table below.
 
 Table 2.
+
 | NODE | WEIGHT |
 | ------- | -------- |
 | B        | 2            |
@@ -43,6 +45,7 @@ Table 2.
 We now have three merged cells with the added weight of both their children. Let's continue to add the lowest weights.  
 
 Table 3.
+
 | NODE | WEIGHT |
 | ------- | -------- |
 | (B & U)   | 4            |
@@ -57,6 +60,7 @@ Table 3.
 At this point, we have done all the easiest combinations. However now we have the lowest, a weight of 2, and then the second lowest with a weight of 3. This is one of the most important steps in building our tree/table. We need to make sure that the largest goes on the left and the smallest goes on the right. This is to make sure that traversal is possible, which we will discuss later. In the table below, I am going to continue to combine the nodes.
 
 Table 4.
+
 | NODE | WEIGHT |
 | ------- | -------- |
 | ((B & U) & A)   | 7            |
@@ -67,14 +71,16 @@ Table 4.
 And then we keep combining.  
 
 Table 5.
+
 | NODE | WEIGHT |
 | ------- | -------- |
 | (((N & F) & (I & L)) & ((B & U) & A))   | 15            |
 | ((SPACE & (T & E)) & ((H & M) & (G & D))) | 9           |
     
-And finallyw
+And finally
   
 Table 6. 
+
 | NODE | WEIGHT |
 | ------- | -------- |
 | ((((N & F) & (I & L)) & ((B & U) & A)) & ((SPACE & (T & E)) & ((H & M) & (G & D)))) | 24          |
@@ -99,7 +105,7 @@ Hopefully by now we understand how a Huffman Table works. If not, you might want
 
 We're gonna need two classes: a a node class and a main class. Let's define them.
 
-```
+```ruby
 class Huffman
 	def initialize()
 
@@ -115,7 +121,7 @@ end
 
 Let's start by creating the very first table above. For this, we probably just want a hash map and then split the input up.
 
-```
+```ruby
 class Huffman
 	def initialize()
 		seeds = Hash.new(0)
@@ -129,7 +135,7 @@ end
 
 Now we have the first set of nodes or the 'seeds'.  What we do above is create a Hash with the default value of 0 so that any character starts with 0, then we loop through each character in the input and increment that character's weight in the hash. This way even if this is the first time we have seen this character, it will still have a numeric value that we can increment. Now let's start to define our Huffman Node class.
 
-```
+```ruby
 class HuffmanNode
 	def initialize(char, weight, leftChild, rightChild, parent)
 		@char = char
@@ -185,7 +191,7 @@ You may also wonder why we have a setter for only parent and nothing else. The r
 
 Now let's return to the Huffman class and start generating some nodes.
 
-```
+```ruby
 class Huffman
 	def initialize()
 
@@ -238,7 +244,7 @@ The obvious solution is to serialize the tree object. From Wikipedia, *"In compu
 
 Let's do this in our Huffman class:
 
-```
+```ruby
 class Huffman
 	def initialize()
 
@@ -276,7 +282,7 @@ That's it. It's a swift little solution, but the file it makes is compact and it
 
 That was the easy part. Now we get to do the hard part. We have to find a way to write only bits to a file and a way to generate the path. Let's first tackle a way to generate a path of just 1's and 0's. Let's first take a look at the Huffman Node class. Having the path generation in the Huffman Node class ensures that all its instances will be able to generate a part of the path:
 
-```
+```ruby
 class HuffmanNode
 	def initialize(char, weight, leftChild, rightChild, parent)
 		@char = char
@@ -339,7 +345,7 @@ We have a makePath function now, which takes in a hash and string. By default, h
 
 Now we have a function to make the path. Let's implement it:
 
-```
+```ruby
 class Huffman
 	def initialize()
 
@@ -385,7 +391,7 @@ First, we create the hash that we are going to use in the makePath function, and
 
 Sorry, it's not time for celebrating yet. We now have two problems in front of us. The first is pretty straight forward, and not too hard to fix. Right now, we have the output as a string, with each character being 8 bytes, even though they are 0's and 1's. We want these to be in bits, where it is a 1to1 ratio between our 0's and 1's and the number of bits. To fix this, Ruby has a really nifty function for arrays called the `pack` function. This packs the array down into a specified format. It can do lots of different formats including hexadecimal and binary. For our purpose, we want binary. Since this is also our message, we want to be able to write it to a file that we can send, so let's implement that:
 
-```
+```ruby
 class Huffman
 	def initialize()
 
@@ -433,7 +439,7 @@ end
 
 This solves our first problem. It opens a file with write (w) and bit (b) modes to ensure that we don't have unwanted data in our file. Then it writes to the file using the pack method with binary (B) mode. So far so good! Now enters the second problem: what if our data isn't perfectly divisible by 8? In order for file.write to write properly, it must be divisible by 8. If the data isn't, it adds padding to the end, which we don't want. The solution is to include 3 bits at the beginning that tell us exactly where in the last byte our data ends, and then to fill the rest up with zero. This way, when we are decoding, we read the first three bits, then we read from the fourth bit until the length of the input minus the total of the first 3 bits. 
 
-```
+```ruby
 class Huffman
 	def initialize()
 
